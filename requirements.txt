@@ -1,0 +1,7 @@
+cohere
+jupyter
+matplotlib
+numpy
+pandas
+seaborn
+tqdm
