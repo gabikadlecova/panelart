@@ -11,9 +11,10 @@ class ClaudeModel:
         res = self.client.messages.create(
             messages=[
                 {
-                "role": "user",
-                "content": prompt
-            }],
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
             model=self.model,
             max_tokens=self.max_tokens
         )

@@ -17,6 +17,48 @@ def base_prompt_proba():
     return prompt_start, prompt_end
 
 
+def choice_proba():
+    prompt_start = """
+    In place of [INSERT], fill in (in Czech) whether the respondent voted in \"Volby do poslanecké sněmovny 2021\" and if yes, then for what party.
+    Choices: ANO, SPOLU, PirátiSTAN, SPD, KSČM, PŘÍSAHA, jiná strana.
+
+    List the probable parties with probabilities (always output whether the respondent voted and for what party). List as many parties as necessary.
+    You can also answer "jiná strana" if the voter voted for a small unpopular party. The probabilities must sum up to 1.0.
+
+    The output format is:
+    *[volil, proba a], [nevolil, proba b]; [PARTY1, proba 1], [PARTY2, proba 2],... , [PARTYN, proba n]]*
+    where PARTY1, PARTY2,... are the names of the parties, proba a, proba b, proba 1,... should be replaced by float probabilities. Do not print anything else after the second star sign.
+    Always list both [volil, proba a], [nevolil, proba b] with the respective probabilities. The probabilities should sum up to 1. (i.e. proba of volil + nevolil = 1.0,
+    proba 1 + proba 2 + ... + proba n = 1.0) 
+    Be sure to keep the correct separators (';' between the volil/nevolil section and party section, ',' anywhere else).
+
+    """
+    prompt_end = " Ve volbách do poslanecké sněmovny 2021 jsem [INSERT]"
+
+    return prompt_start, prompt_end
+
+
+def choice_long_proba():
+    prompt_start = """
+    In place of [INSERT], fill in (in Czech) whether the respondent voted in \"Volby do poslanecké sněmovny 2021\" and if yes, then for what party.
+    Choices: ANO, SPOLU, PirátiSTAN, Svoboda a přímá demokracie, KSČM, PŘÍSAHA, jiná strana.
+
+    List the probable parties with probabilities (always output whether the respondent voted and for what party). List as many parties as necessary.
+    You can also answer "jiná strana" if the voter voted for a small unpopular party. The probabilities must sum up to 1.0.
+
+    The output format is:
+    *[volil, proba a], [nevolil, proba b]; [PARTY1, proba 1], [PARTY2, proba 2],... , [PARTYN, proba n]]*
+    where PARTY1, PARTY2,... are the names of the parties, proba a, proba b, proba 1,... should be replaced by float probabilities. Do not print anything else after the second star sign.
+    Always list both [volil, proba a], [nevolil, proba b] with the respective probabilities. The probabilities should sum up to 1. (i.e. proba of volil + nevolil = 1.0,
+    proba 1 + proba 2 + ... + proba n = 1.0) 
+    Be sure to keep the correct separators (';' between the volil/nevolil section and party section, ',' anywhere else).
+
+    """
+    prompt_end = " Ve volbách do poslanecké sněmovny 2021 jsem [INSERT]"
+
+    return prompt_start, prompt_end
+
+
 def base_prompt_one_party():
     prompt_start = """
     In place of [INSERT], fill in (in Czech) whether the respondent voted in \"Volby do poslanecké sněmovny 2021\" and if yes, then for what party.
@@ -92,6 +134,8 @@ def prompt_simple_instructions_proba():
 
 prompt_functions = {
     "base": base_prompt_proba,
+    "choice": choice_proba,
+    "choice_long": choice_long_proba,
     "one_party": base_prompt_one_party,
     "one_party_simple": base_prompt_one_party_simple,
     "czech": czech_prompt_proba,

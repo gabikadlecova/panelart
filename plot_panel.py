@@ -26,7 +26,9 @@ def get_text(response, model):
     elif model in ['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo']:
         return response.choices[0].message.content
     elif 'claude' in model:
-        return response.messages.content
+        return response.content[0].text
+    else:
+        raise ValueError(f"Unknown model {model}")
 
 
 if __name__ == "__main__":
