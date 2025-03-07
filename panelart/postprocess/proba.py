@@ -57,20 +57,17 @@ def llm_parse_text(pred, tokenizer, model, device='cuda:1'):
 
 
 def parse_text(pred):
-    try:
-        pred = pred.strip().strip('*')
-        pred = pred.split('; ')
-        if len(pred) == 3:
-            pred = [*pred]
-            pred = f"[{pred[0]}], [{pred[1]}]; {pred[2]}"
-        else:
-            pred = '; '.join(pred)
+    pred = pred.strip().strip('*;,').strip()
+    pred = pred.split('; ')
+    if len(pred) == 3:
+        pred = [*pred]
+        pred = f"[{pred[0]}], [{pred[1]}]; {pred[2]}"
+    else:
+        pred = '; '.join(pred)
 
-        res_volil, parts, pbs = parse_resp(pred)
-        return res_volil, parts, pbs
-    except Exception as e:
-        print(f"Error parsing text: {pred}")
-        raise e
+    res_volil, parts, pbs = parse_resp(pred)
+    return res_volil, parts, pbs
+
 
 def make_choice(res_volil, parts, pbs):
     try:

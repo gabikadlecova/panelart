@@ -39,6 +39,7 @@ def parse_text_llm(text, model, tokenizer, device):
     except Exception as e:
         print(f"Error parsing text: {text}")
         text = llm_parse_text(text, tokenizer, model, device=device)
+        print("Modified text:", text)
         parsed = parse_text_proba(text)
 
     return parsed
