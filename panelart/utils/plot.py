@@ -10,4 +10,4 @@ def plot_results(plot_df, title, figsize=(10, 6)):
     plt.legend()
     plt.title(title)
     plt.tight_layout()
-    plt.show()
+    #plt.show()

@@ -37,77 +37,37 @@ def parse_resp(r):
     return res_volil, ps, pbs
 
 
+def llm_parse_text(pred, tokenizer, model):
+    messages = [
+        {
+            "role": "system",
+            "content": 
+                "You will get a poorly structured text and you will convert it to the following format: [volil, proba a], [nevolil, proba b]; [party1, proba1], [party2, proba2],... "
+                "Do not output anything else in natural language and strictly adhere to the format. Volil and nevolil go first, then proba."
+        },
+        {
+            "role": "user",
+            "content": pred
+        }
+    ]
+
+    inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors='pt')
+    out = model.generate(inputs, max_new_tokens=128)
+    return tokenizer.decode(out[0]).split('\n\n')[-1].replace('<|eot_id|>')
+
+
 def parse_text(pred):
     try:
-        print(pred)
-        if "ODS, 0.30, ANO, 0.20" in pred or 'Omlouvám se, ale nemohu' in pred or 'Je mi líto, ale' in pred or '*[], []' in pred or 'Promiň, ale nemohu' in pred or "I'm sorry, but I can't assist with that request" in pred or 'olil' not in pred:
-            return None
-        
-        for l in pred.split('\n'):
-            if l.startswith('* [') or (l.startswith('*') and not l.startswith('*Pokud') and not l.startswith('* ')):
-                pred = l
-                break
-        
-        if 'Pro určení' in pred:
-            pred = pred.split('\n')[2]
-
-        pred = pred.replace('volil, 0.8; nevolil, 0.2; ANO, 0.5, SPD, 0.3, jiná strana, 0.2', '[volil, 0.8], [nevolil, 0.2]; [ANO, 0.5], [SPD, 0.3], [jiná strana, 0.2]')
-        pred = pred.replace('volil, 0.8; nevolil, 0.2; Piráti a STAN, 0.3, SPOLU (ODS, KDU-ČSL, TOP 09), 0.3, ANO 2011, 0.15, PŘÍSAHA, 0.1, Česká pirátská strana, 0.05, jiná strana, 0.1', '[volil, 0.8], [nevolil, 0.2]; [Piráti a STAN, 0.3], [SPOLU, 0.3], [ANO 2011, 0.15], [PŘÍSAHA, 0.1], [Česká pirátská strana, 0.05], [jiná strana, 0.1]')
-        pred = pred.replace('volil, 0.6; nevolil, 0.4; ANO 2011, 0.3, SPD, 0.2, Česká pirátská strana, 0.1', '[volil, 0.6], [nevolil, 0.4]; [ANO 2011, 0.3], [SPD, 0.2], [Česká pirátská strana, 0.1]')
-        pred = pred.replace('volil, 0.6, nevolil, 0.4;', '[volil, 0.6], [nevolil, 0.4];')
-        pred = pred.replace('volil, 0.3, nevolil, 0.7;', '[volil, 0.3], [nevolil, 0.7];')
-        pred = pred.replace('Spíše volil, 0.7, spíše nevolil, 0.3; SPD, 0.5, ANO, 0.3, jiná strana, 0.2', '[volil, 0.7], [nevolil, 0.3]; [SPD, 0.5], [ANO, 0.3], [jiná strana, 0.2]')
-        pred = pred.replace('Volil, 0.6', '[volil, 0.6], [nevolil, 0.4]')
-        pred = pred.replace('ANO, 0.5, SPD, 0.3, jiná strana, 0.2', '[ANO, 0.5], [SPD, 0.3], [jiná strana, 0.2]')
-        pred = pred.replace('[\n', '[')
-        pred = pred.replace('*[-', '*[')
-        pred = pred.replace('volil, 0.7, nevolil, 0.3; ANO, 0.4, SPD, 0.2, Koalice SPOLU, 0.15, Piráti a STAN, 0.15, jiná strana, 0.1', '[volil, 0.7], [nevolil, 0.3]; [ANO, 0.4], [SPD, 0.2], [SPOLU, 0.15], [Piráti a STAN, 0.15], [jiná strana, 0.1]')
-        pred = pred.replace('* ', '*')
-        pred = pred.replace('],[', '], [')
-        pred = pred.replace('volil, 0.4*,', '[volil, 0.4],')
-        pred = pred.replace('volil, 0.7;', '[volil, 0.7], [nevolil, 0.3];')
-        pred = pred.replace('SPOLU (ODS, KDU-ČSL, TOP 09)', 'SPOLU')
-        pred = pred.replace('SPOLU (ODS, KDU-ČSL a TOP 09)', 'SPOLU')
-        pred = pred.replace('Spolu (ODS, KDU-ČSL, TOP 09)', 'SPOLU')
-        pred = pred.replace('Spolu - ODS, KDU-ČSL, TOP 09', 'SPOLU')
-        pred = pred.replace('(', '[').replace(')', ']')
-        pred = pred.replace('*; ', '*')
-        pred = pred.replace('Piráti a STAN, 0.3, SPOLU, 0.3, ANO 2011, 0.15, PŘÍSAHA, 0.1, Česká pirátská strana, 0.05, jiná strana, 0.1', '[Piráti a STAN, 0.3], [SPOLU, 0.3], [ANO 2011, 0.15], [PŘÍSAHA, 0.1], [Česká pirátská strana, 0.05], [jiná strana, 0.1]')
-        pred = pred.replace('volil, 0.65, nevolil, 0.35; SPD, 0.40, ANO, 0.25, Trikolóra Svobodní Soukromníci, 0.20, jiná strana, 0.15', '[volil, 0.65], [nevolil, 0.35]; [SPD, 0.40], [ANO, 0.25], [Trikolóra Svobodní Soukromníci, 0.20], [jiná strana, 0.15]')
-        pred = pred.replace('volil, 0.7, nevolil, 0.3; SPOLU, 0.4, ANO, 0.3, Piráti a STAN, 0.2, jiná strana, 0.1', '[volil, 0.7], [nevolil, 0.3]; [SPOLU, 0.4], [ANO, 0.3], [Piráti a STAN, 0.2], [jiná strana, 0.1]')
-        pred = pred.replace('volil, 0.8, nevolil, 0.2; SPOLU, 0.4, Piráti a STAN, 0.3, ANO, 0.2, jiná strana, 0.1', '[volil, 0.8], [nevolil, 0.2]; [SPOLU, 0.4], [Piráti a STAN, 0.3], [ANO, 0.2], [jiná strana, 0.1]')
-        pred = pred.replace('ANO 2011, 0.3, SPD, 0.2, Česká pirátská strana, 0.1', '[ANO 2011, 0.3], [SPD, 0.2], [Česká pirátská strana, 0.1]')
-        pred = pred.replace('volil, 0.65;', '[volil, 0.65], [nevolil, 0.35];')
-        pred = pred.replace('volil, 0.85;', '[volil, 0.85], [nevolil, 0.15];')
-        pred = pred.replace('volil, 0.6;', '[volil, 0.6], [nevolil, 0.4];')
-        pred = pred.replace('volil, 0.6; nevolil, 0.4; ANO 2011, 0.3, SPD, 0.2, Česká pirátská strana, 0.1', '[volil, 0.6], [nevolil, 0.4]; [ANO 2011, 0.3], [SPD, 0.2], [Česká pirátská strana, 0.1]')
-        pred = pred.replace('[[', '[').replace(']]', ']').replace('volil, 0.8;', '[volil, 0.8], [nevolil, 0.2];')
-        pred = pred.replace('[volil, 0.6], [nevolil, 0.4], [nevolil, 0.4];', '[volil, 0.6], [nevolil, 0.4];')
-        pred = pred.replace('SPD, 0.4, ANO, 0.3, jiná strana, 0.3', '[SPD, 0.4], [ANO, 0.3], [jiná strana, 0.3]')
-
-        if 'January 2023' in pred or '<EOS_TOKEN>' in pred:
-            pred = pred.split('<EOS_TOKEN>')[0].replace(';\n', '')
-        
+        pred = pred.strip().strip('*')
         pred = pred.split('; ')
         if len(pred) == 3:
             pred = [*pred]
             pred = f"[{pred[0]}], [{pred[1]}]; {pred[2]}"
         else:
             pred = '; '.join(pred)
-        pred = pred.replace('[*', '*[')
 
-        failures = ['[nevolil, 1.0];',
-                    '[nevolila, 1.0]; [], []',
-                    '[volil, 0.0], [nevolil, 1.0];',
-                    '[nevolila, 1.0], ;',
-                '[nevolil, 1.0]; [], []',
-                '[nevolil, 1.0], []; []']
-        if pred.strip('*') in failures:
-            volil = False
-        else:
-            res_volil, parts, pbs = parse_resp(pred)
-            #print(res_volil, parts, pbs)
-            volil = np.random.choice([True, False], size=1, p=[res_volil['volil'], res_volil['nevolil']])
+        res_volil, parts, pbs = parse_resp(pred)
+        volil = np.random.choice([True, False], size=1, p=[res_volil['volil'], res_volil['nevolil']])
 
         if volil:        
             pbs = np.array(pbs)
@@ -134,10 +94,9 @@ def parse_text(pred):
             elif 'KSČM' in choice or 'omunist' in choice or 'KSCM' in choice:
                 choice = 'KSČM'
             elif 'SPD' in choice or 'Svoboda a p' in choice or 'SVOBODA A P' in choice:
-                print(choice)
                 choice = 'SPD'
             elif 'kandidát Ne' in choice or 'Svobodomyslní' in choice or 'Desired' in choice or choice == 'Typ00' or choice == 'PCH' \
-                or choice == 'neznámá strana' or 'Koalice pro svobo' in choice or 'Paroubek' in choice or 'nehlasuji' in choice or 'nevolil' in choice or 'nevím' in choice:
+                or choice == 'neznámá strana' or 'Koalice pro svobo' in choice or 'Paroubek' in choice or 'nehlasuji' in choice or 'nevolil' in choice or 'nevím' in choice or 'ezávislý kand':
                 choice = None
             else:
                 raise ValueError(f"Unknown party: {choice}")

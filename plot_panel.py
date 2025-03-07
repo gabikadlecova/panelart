@@ -6,7 +6,9 @@ from panelart.utils.plot import plot_results
 from panelart.postprocess import parse_party
 from panelart.postprocess.one_party import parse_text
 from panelart.postprocess.proba import parse_text as parse_text_proba
+from panelart.postprocess.proba import llm_parse_text
 import seaborn as sns  # type: ignore
+import os
 
 
 def count_votes(v):
@@ -31,6 +33,16 @@ def get_text(response, model):
         raise ValueError(f"Unknown model {model}")
 
 
+def parse_text_llm(text, model, tokenizer):
+    try:
+        parsed = parse_text_proba(text)
+    except Exception as e:
+        print(f"Error parsing text: {text}")
+        text = llm_parse_text(text)
+        parsed = parse_text_proba(text)
+
+    return parsed
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Plot panel art")
     parser.add_argument("results_path", type=str, help="Path to the results file")
@@ -50,12 +62,27 @@ if __name__ == "__main__":
     orig = [parse_party(t) for t in df.loc[results.keys()]['Q21']]
     m = args.model_name
 
-    if args.plot_type == "proba":
-        results = [[parse_text_proba(get_text(r, m)) for r in results.values()] for _ in range(args.n_sample)]
-    elif args.plot_type == "one_party":
-        results = [[parse_text(get_text(r, m)) for r in results.values()]]
+    from transformers import AutoTokenizer, AutoModelForCausalLM
+    import torch
+
+    model_name = 'meta-llama/Llama-3.1-8B-Instruct'
+    device='cuda:1'
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name, device_map=device, torch_dtype=torch.float16)
+
+    if os.path.exists(f"{args.results_path}.processed.pkl"):
+        with open(f"{args.results_path}.processed.pkl", "rb") as f:
+            results = pickle.load(f)
     else:
-        raise ValueError("Unknown plot type")
+        if args.plot_type == "proba":
+            results = [[parse_text_llm(get_text(r, m)) for r in results.values()] for _ in range(args.n_sample)]
+        elif args.plot_type == "one_party":
+            results = [[parse_text(get_text(r, m)) for r in results.values()]]
+        else:
+            raise ValueError("Unknown plot type")
+        
+        with open(f"{args.results_path}.processed.pkl", "wb") as ff:
+            pickle.dump(results, ff)
     
     data = []
     orig_counts = count_votes(orig)
@@ -70,3 +97,5 @@ if __name__ == "__main__":
     plot_df['party'] = pd.Categorical(plot_df['party'], ['ANO', 'SPOLU', 'PirátiSTAN', 'SPD', 'KSČM', 'PŘÍSAHA', 'jiná strana', 'neuvedeno', 'nevolil'])
 
     plot_results(plot_df, title=args.title, figsize=(10, 6))
+    import matplotlib.pyplot as plt
+    plt.savefig(f"{args.title}.png")

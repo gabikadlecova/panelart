@@ -17,6 +17,10 @@ class CommandRPlus:
             )
         except cohere.errors.too_many_requests_error.TooManyRequestsError as e:
             if self.sleep_if_timeout:
+                # out of free api calls
+                if 'month' in str(e):
+                    raise e
+
                 print('Sleeping during 1 minute timeout...')
                 time.sleep(60)
                 res = self.generate(prompt, **kwargs)

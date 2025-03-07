@@ -13,7 +13,7 @@ def generate_panel(model, prompts, results=None, skip_existing=True, verbose=Tru
         
             response = model.generate(prompt, **kwargs)
             results[idx] = response
-    except KeyboardInterrupt as e:
+    except (Exception, KeyboardInterrupt) as e:
         print(type(e))
         print('Interrupted response generation, returning all computed results.')
         return results
