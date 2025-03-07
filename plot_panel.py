@@ -33,12 +33,12 @@ def get_text(response, model):
         raise ValueError(f"Unknown model {model}")
 
 
-def parse_text_llm(text, model, tokenizer):
+def parse_text_llm(text, model, tokenizer, device):
     try:
         parsed = parse_text_proba(text)
     except Exception as e:
         print(f"Error parsing text: {text}")
-        text = llm_parse_text(text, tokenizer, model)
+        text = llm_parse_text(text, tokenizer, model, device=device)
         parsed = parse_text_proba(text)
 
     return parsed
@@ -75,7 +75,7 @@ if __name__ == "__main__":
             results = pickle.load(f)
     else:
         if args.plot_type == "proba":
-            results = [[parse_text_llm(get_text(r, m), model, tokenizer) for r in results.values()] for _ in range(args.n_sample)]
+            results = [[parse_text_llm(get_text(r, m), model, tokenizer, device) for r in results.values()] for _ in range(args.n_sample)]
         elif args.plot_type == "one_party":
             results = [[parse_text(get_text(r, m)) for r in results.values()]]
         else:

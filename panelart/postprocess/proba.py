@@ -37,7 +37,7 @@ def parse_resp(r):
     return res_volil, ps, pbs
 
 
-def llm_parse_text(pred, tokenizer, model):
+def llm_parse_text(pred, tokenizer, model, device='cuda:1'):
     messages = [
         {
             "role": "system",
@@ -52,8 +52,8 @@ def llm_parse_text(pred, tokenizer, model):
     ]
 
     inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors='pt')
-    out = model.generate(inputs, max_new_tokens=128)
-    return tokenizer.decode(out[0]).split('\n\n')[-1].replace('<|eot_id|>')
+    out = model.generate(inputs.to(device), max_new_tokens=128)
+    return tokenizer.decode(out[0]).split('\n\n')[-1].replace('<|eot_id|>', '')
 
 
 def parse_text(pred):
