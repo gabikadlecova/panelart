@@ -75,7 +75,7 @@ if __name__ == "__main__":
             results = pickle.load(f)
     else:
         if args.plot_type == "proba":
-            results = [[parse_text_llm(get_text(r, m)) for r in results.values()] for _ in range(args.n_sample)]
+            results = [[parse_text_llm(get_text(r, m), model, tokenizer) for r in results.values()] for _ in range(args.n_sample)]
         elif args.plot_type == "one_party":
             results = [[parse_text(get_text(r, m)) for r in results.values()]]
         else:
