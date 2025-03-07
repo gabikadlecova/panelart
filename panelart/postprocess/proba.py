@@ -67,6 +67,13 @@ def parse_text(pred):
             pred = '; '.join(pred)
 
         res_volil, parts, pbs = parse_resp(pred)
+        return res_volil, parts, pbs
+    except Exception as e:
+        print(f"Error parsing text: {pred}")
+        raise e
+
+def make_choice(res_volil, parts, pbs):
+    try:
         volil = np.random.choice([True, False], size=1, p=[res_volil['volil'], res_volil['nevolil']])
 
         if volil:        
@@ -105,5 +112,5 @@ def parse_text(pred):
 
         return choice
     except Exception as e:
-        print(pred)
+        print(res_volil, parts, pbs)
         raise e

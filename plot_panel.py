@@ -5,7 +5,7 @@ from panelart.data.soc_distrust.utils import load_soc_distrust
 from panelart.utils.plot import plot_results
 from panelart.postprocess import parse_party
 from panelart.postprocess.one_party import parse_text
-from panelart.postprocess.proba import parse_text as parse_text_proba
+from panelart.postprocess.proba import parse_text as parse_text_proba, make_choice
 from panelart.postprocess.proba import llm_parse_text
 import seaborn as sns  # type: ignore
 import os
@@ -75,7 +75,22 @@ if __name__ == "__main__":
             results = pickle.load(f)
     else:
         if args.plot_type == "proba":
-            results = [[parse_text_llm(get_text(r, m), model, tokenizer) for r in results.values()] for _ in range(args.n_sample)]
+            cache_path = f"{args.results_path}.cache.pkl"
+            if os.path.exists(cache_path):
+                with open(cache_path, "rb") as f:
+                    cache = pickle.load(f)
+            else:
+                cache = []
+
+            for i, r in enumerate(results.values()):
+                if i < len(cache):
+                    continue
+                res = parse_text_llm(get_text(r, m), model, tokenizer)
+                cache.append(res)
+                with open('cache.pkl', 'wb') as ff:
+                    pickle.dump(cache, ff)
+
+            results = [[make_choice(*c) for c in cache] for _ in range(args.n_sample)]
         elif args.plot_type == "one_party":
             results = [[parse_text(get_text(r, m)) for r in results.values()]]
         else:
