@@ -33,12 +33,12 @@ def get_text(response, model):
         raise ValueError(f"Unknown model {model}")
 
 
-def parse_text_llm(text, model, tokenizer):
+def parse_text_llm(text, model, tokenizer, device):
     try:
         parsed = parse_text_proba(text)
     except Exception as e:
         print(f"Error parsing text: {text}")
-        text = llm_parse_text(text, tokenizer, model)
+        text = llm_parse_text(text, tokenizer, model, device=device)
         parsed = parse_text_proba(text)
 
     return parsed
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     import torch
 
     model_name = 'meta-llama/Llama-3.1-8B-Instruct'
-    device='cuda:1'
+    device = 'cuda:1'
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(model_name, device_map=device, torch_dtype=torch.float16)
 
@@ -85,7 +85,7 @@ if __name__ == "__main__":
             for i, r in enumerate(results.values()):
                 if i < len(cache):
                     continue
-                res = parse_text_llm(get_text(r, m), model, tokenizer)
+                res = parse_text_llm(get_text(r, m), model, tokenizer, device)
                 cache.append(res)
                 with open('cache.pkl', 'wb') as ff:
                     pickle.dump(cache, ff)
