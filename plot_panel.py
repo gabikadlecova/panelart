@@ -38,7 +38,7 @@ def parse_text_llm(text, model, tokenizer):
         parsed = parse_text_proba(text)
     except Exception as e:
         print(f"Error parsing text: {text}")
-        text = llm_parse_text(text)
+        text = llm_parse_text(text, tokenizer, model)
         parsed = parse_text_proba(text)
 
     return parsed
