@@ -5,7 +5,7 @@ from panelart.data.soc_distrust.utils import load_soc_distrust
 from panelart.utils.plot import plot_results
 from panelart.postprocess import parse_party
 from panelart.postprocess.one_party import parse_text
-from panelart.postprocess.proba import parse_text as parse_text_proba
+from panelart.postprocess.proba import parse_text as parse_text_proba, make_choice
 import seaborn as sns  # type: ignore
 
 
@@ -43,6 +43,10 @@ if __name__ == "__main__":
 
     sns.set()
 
+    args.model_name = args.results_path.split("/")[-1].split("_")[0]
+    if 'one_party' in args.results_path:
+        args.plot_type = 'one_party'
+
     with open(args.results_path, "rb") as f:
         results = pickle.load(f)
 
@@ -51,9 +55,22 @@ if __name__ == "__main__":
     m = args.model_name
 
     if args.plot_type == "proba":
-        results = [[parse_text_proba(get_text(r, m)) for r in results.values()] for _ in range(args.n_sample)]
+        parsed = []
+        for i, r in enumerate(results.values()):
+            p = parse_text_proba(get_text(r, m))
+            if p is None:
+                continue
+            parsed.append(p)
+
+        with open(f"{args.results_path}_parsed.pkl", "wb") as f:
+            pickle.dump(parsed, f)
+
+        print(len(parsed))
+        results = [[make_choice(p) for p in parsed] for _ in range(args.n_sample)]
     elif args.plot_type == "one_party":
         results = [[parse_text(get_text(r, m)) for r in results.values()]]
+        results = [[r for r in results[0] if r is not None]]
+        print(len(results[0]))
     else:
         raise ValueError("Unknown plot type")
     
@@ -70,3 +87,5 @@ if __name__ == "__main__":
     plot_df['party'] = pd.Categorical(plot_df['party'], ['ANO', 'SPOLU', 'PirátiSTAN', 'SPD', 'KSČM', 'PŘÍSAHA', 'jiná strana', 'neuvedeno', 'nevolil'])
 
     plot_results(plot_df, title=args.title, figsize=(10, 6))
+    import matplotlib.pyplot as plt
+    plt.savefig(f"{args.title}.png")
