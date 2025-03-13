@@ -1,5 +1,35 @@
-# SBP-BRiMS '24 - Creating Artificial Survey Panels Is Still Difficult
+# Creating Artificial Survey Panels using Large Language Models
 *Gabriela Kadlecová, Petra Vidnerová, Roman Neruda, Josef Šlerka*
+
+Instructions to run the experiments:
+
+1. Create the artificial panel
+
+Modify experiments.csv to set parameters (`<model_name>` is one of command-r-plus, claude and gpt-4o). Set the api key, output dir and seed.
+
+```
+./run_experiments.sh -f experiments.csv -a <your_api_key> -o paper_experiments -s 42 -m <model_name>
+```
+
+2. 
+
+```
+for res in paper_experiments/*.pkl; do
+    echo "------------"
+    echo $res
+    if [ -f $res.png ]; then
+        echo "Skipping $res"
+    fi
+
+    python plot_panel.py $res data/soc_distrust.sav --n_sample 10 --title $res
+done
+
+```
+
+
+------------
+
+### SBP-BRiMS
 
 This repository contains code for the SBP-BRiMS 2024 conference working paper. We present two
 studies on generating artificial survey panels - German Bundestag elections 2027 and

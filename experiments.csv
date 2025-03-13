@@ -3,9 +3,6 @@ sample_size,prompt_type,shuffle,split_up
 200,base,True,False
 200,base,True,True
 200,czech,,
-200,one_party,,
-200,one_party_simple,,
-200,simple,,
 200,act_as,,
 200,choice,,
 200,choice_long,,
