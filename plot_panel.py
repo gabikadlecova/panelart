@@ -88,7 +88,7 @@ if __name__ == "__main__":
                     continue
                 res = parse_text_llm(get_text(r, m), model, tokenizer, device)
                 cache.append(res)
-                with open('cache.pkl', 'wb') as ff:
+                with open(f'{args.results_path}.cache.pkl', 'wb') as ff:
                     pickle.dump(cache, ff)
 
             results = [[make_choice(*c) for c in cache] for _ in range(args.n_sample)]

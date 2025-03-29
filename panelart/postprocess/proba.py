@@ -58,6 +58,7 @@ def llm_parse_text(pred, tokenizer, model, device='cuda:1'):
 
 def parse_text(pred):
     pred = pred.strip().strip('*;,').strip()
+    pred = pred.split('\n')[0]
     pred = pred.split('; ')
     if len(pred) == 3:
         pred = [*pred]
